@@ -1,4 +1,4 @@
-package com.example.testapp.utils
+package com.example.testapp.auth
 
 data class AuthResult(
     val data: UserData?,
@@ -8,6 +8,7 @@ data class AuthResult(
 data class UserData(
     val userId: String,
     val username: String?,
-    val profilePictureUrl: String?
+    val profilePictureUrl: String?,
+    val email: String?
 )
 

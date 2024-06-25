@@ -1,4 +1,4 @@
-package com.example.testapp.utils
+package com.example.testapp.auth
 
 import android.content.ContentValues.TAG
 import android.content.Context
@@ -15,7 +15,6 @@ import kotlinx.coroutines.tasks.await
 import com.example.testapp.R
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.GoogleAuthProvider
-import com.example.testapp.utils.AuthResult
 
 class FirebaseAuthClient(
     private val context: Context,
@@ -48,7 +47,8 @@ class FirebaseAuthClient(
                     UserData(
                         userId = uid,
                         username = displayName,
-                        profilePictureUrl = photoUrl?.toString()
+                        profilePictureUrl = photoUrl?.toString(),
+                        email = email
                     )
                 },
                 errorMessage = null
@@ -72,7 +72,8 @@ class FirebaseAuthClient(
                     UserData(
                         userId = uid,
                         username = displayName,
-                        profilePictureUrl = photoUrl?.toString()
+                        profilePictureUrl = photoUrl?.toString(),
+                        email = email
                     )
                 },
                 errorMessage = null
@@ -95,7 +96,8 @@ class FirebaseAuthClient(
                     UserData(
                         userId = uid,
                         username = displayName,
-                        profilePictureUrl = photoUrl?.toString()
+                        profilePictureUrl = photoUrl?.toString(),
+                        email = email
                     )
                 },
                 errorMessage = null
@@ -128,7 +130,8 @@ class FirebaseAuthClient(
         UserData(
             userId = uid,
             username = displayName,
-            profilePictureUrl = photoUrl?.toString()
+            profilePictureUrl = photoUrl?.toString(),
+            email = email
         )
     }
 

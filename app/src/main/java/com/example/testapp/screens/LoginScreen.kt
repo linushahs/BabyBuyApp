@@ -40,7 +40,7 @@ import com.example.testapp.ui.theme.BorderPrimaryColor
 import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.utils.EmailValidationMessage
 import com.example.testapp.utils.PasswordValidationMessage
-import com.example.testapp.utils.SignInState
+import com.example.testapp.auth.SignInState
 import com.example.testapp.utils.isValidEmail
 
 //@Preview(showBackground = true, widthDp = 360, heightDp = 700)

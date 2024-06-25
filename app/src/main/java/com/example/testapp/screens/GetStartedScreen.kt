@@ -45,7 +45,7 @@ import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.ui.theme.fontFamily
 
-@Preview(showBackground = true, widthDp = 375, heightDp = 812)
+@Preview(showBackground = true, widthDp = 360, heightDp = 812)
 @Composable
 fun GetStartedScreenPreview(onGetStartedClicked: () -> Unit = {}) {
     BabyBuyAppTheme {
@@ -90,7 +90,7 @@ fun GetStartedScreenPreview(onGetStartedClicked: () -> Unit = {}) {
                                     colors = listOf(GradientColor1, GradientColor2)
                                 ),
                                 fontFamily = fontFamily,
-                                fontSize = 21.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold
                             ),
                         )
@@ -104,7 +104,7 @@ fun GetStartedScreenPreview(onGetStartedClicked: () -> Unit = {}) {
 
                     Text(
                         text = "The store offers a wide range of products essential for baby care supplies.",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = TextColor1,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(bottom = 24.dp)

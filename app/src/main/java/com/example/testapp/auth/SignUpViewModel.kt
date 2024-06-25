@@ -1,4 +1,4 @@
-package com.example.testapp.utils
+package com.example.testapp.auth
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -17,18 +17,37 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.testapp.R
+import com.example.testapp.ui.theme.BorderPrimaryColor
+import com.example.testapp.ui.theme.TextColor1
 
+@Preview
 @Composable
-public fun SearchBar(searchInput: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+public fun SearchBar(
+    searchInput: String = "",
+    onChange: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     TextField(
         value = searchInput,
         onValueChange = onChange,
         leadingIcon = {
-            Icon(Icons.Default.Search, contentDescription = null, Modifier.size(24.dp))
+            Icon(
+                painter = painterResource(id = R.drawable.search),
+                contentDescription = null,
+                tint = Color.LightGray,
+                modifier = Modifier.size(19.dp)
+            )
         },
         placeholder = {
-            Text("Search here.." , style = MaterialTheme.typography.bodySmall)
+            Text(
+                "Search here..",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         },
         textStyle = MaterialTheme.typography.bodyMedium,
         colors = TextFieldDefaults.colors(
@@ -40,10 +59,10 @@ public fun SearchBar(searchInput: String, onChange: (String) -> Unit, modifier: 
         ),
         modifier = modifier
             .border(
-                border = BorderStroke(1.dp, Color.LightGray),
-                shape = RoundedCornerShape(5.dp)
+                border = BorderStroke(1.dp, BorderPrimaryColor),
+                shape = RoundedCornerShape(7.dp)
             )
-            .height(52.dp)
+            .height(48.dp)
             .fillMaxWidth(),
     )
 }

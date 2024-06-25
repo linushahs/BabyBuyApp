@@ -1,39 +1,22 @@
 package com.example.testapp
 
-import android.app.Activity
-import android.content.Context
+import android.Manifest.permission.READ_EXTERNAL_STORAGE
+import android.Manifest.permission.READ_MEDIA_IMAGES
+import android.Manifest.permission.READ_MEDIA_VIDEO
+import android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.testapp.screens.DashboardScreenPreview
-import com.example.testapp.screens.GetStartedScreenPreview
-import com.example.testapp.screens.LoginScreenPreview
-import com.example.testapp.screens.SignupScreenPreview
+import androidx.core.content.ContextCompat
 import com.example.testapp.ui.theme.BabyBuyAppTheme
-import com.example.testapp.utils.FirebaseAuthClient
-import com.example.testapp.utils.AuthResult
-import com.example.testapp.utils.SignInViewModel
-import com.example.testapp.utils.SignUpViewModel
+import com.example.testapp.auth.FirebaseAuthClient
 import com.google.android.gms.auth.api.identity.Identity
-import kotlinx.coroutines.launch
-
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import android.os.Build
+import com.google.firebase.storage.ktx.storage
 
 class MainActivity : ComponentActivity() {
     private val googleAuthUiClient by lazy {
@@ -43,6 +26,28 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val db = Firebase.firestore;
+    private val storage = Firebase.storage
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {}
+
+    private fun checkAndRequestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            requestPermissionLauncher.launch(
+                arrayOf(
+                    READ_MEDIA_IMAGES,
+                    READ_MEDIA_VIDEO,
+                    READ_MEDIA_VISUAL_USER_SELECTED
+                )
+            )
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionLauncher.launch(arrayOf(READ_MEDIA_IMAGES, READ_MEDIA_VIDEO))
+        } else {
+            requestPermissionLauncher.launch(arrayOf(READ_EXTERNAL_STORAGE))
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -50,127 +55,13 @@ class MainActivity : ComponentActivity() {
                 BabyBuyApp(
                     googleAuthUiClient,
                     lifecycleOwner = this, // Pass the Activity instance as LifecycleOwner
-                    context = applicationContext // Pass the applicationContext
-                 )
-            }
-        }
-    }
-}
-
-// Routes of the app (enums)
-enum class BabyBuyScreen() {
-    Login,
-    Signup,
-    Dashboard,
-    GetStarted
-}
-
-@Composable
-fun BabyBuyApp(googleAuthUiClient: FirebaseAuthClient, lifecycleOwner: LifecycleOwner, context: Context) {
-    val navController = rememberNavController();
-
-    Scaffold() { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BabyBuyScreen.GetStarted.name,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(route = BabyBuyScreen.GetStarted.name) {
-                GetStartedScreenPreview(onGetStartedClicked = { navController.navigate(BabyBuyScreen.Login.name) })
-            }
-
-            composable(route = BabyBuyScreen.Login.name) {
-                val viewModel = viewModel<SignInViewModel>()
-                val state by viewModel.state.collectAsStateWithLifecycle()
-
-                LaunchedEffect(key1 = Unit) {
-                    if (googleAuthUiClient.getSignedInUser() != null) {
-                        navController.navigate(BabyBuyScreen.Dashboard.name)
-                    }
-                }
-
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.StartIntentSenderForResult(),
-                    onResult = { result ->
-                        if (result.resultCode == Activity.RESULT_OK) {
-                            lifecycleOwner.lifecycleScope.launch {
-                                val signInResult = googleAuthUiClient.signInWithIntent(
-                                    intent = result.data ?: return@launch
-                                )
-                                viewModel.onSignInResult(signInResult)
-                            }
-                        }
-                    }
-                )
-
-                LaunchedEffect(key1 = state.isSignInSuccessful) {
-                    if (state.isSignInSuccessful) {
-                        Toast.makeText(
-                            context,
-                            "Sign in successful",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        navController.navigate(BabyBuyScreen.Dashboard.name)
-                        viewModel.resetState()
-                    }
-                }
-
-                LoginScreenPreview(
-                    state = state,
-                    onSignInClick = { email, password ->
-                        lifecycleOwner.lifecycleScope.launch {
-                            val result =
-                                googleAuthUiClient.signInWithEmailAndPassword(email, password)
-                            viewModel.onSignInResult(result);
-                        }
-                    },
-                    onGoogleSignInClick = {
-                        lifecycleOwner.lifecycleScope.launch {
-                            val signInIntentSender = googleAuthUiClient.signIn()
-                            launcher.launch(
-                                IntentSenderRequest.Builder(
-                                    signInIntentSender ?: return@launch
-                                ).build()
-                            )
-                        }
-                    },
-                    onSignupBtnClicked = { navController.navigate(BabyBuyScreen.Signup.name) },
+                    context = applicationContext, // Pass the applicationContext
+                    db = db
                 )
             }
-
-            composable(route = BabyBuyScreen.Signup.name) {
-                val viewModel = viewModel<SignUpViewModel>()
-                val state by viewModel.state.collectAsStateWithLifecycle()
-
-                LaunchedEffect(key1 = state.isSignUpSuccessful) {
-                    if (state.isSignUpSuccessful) {
-                        Toast.makeText(
-                            context,
-                            "Created user successfully",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        navController.navigate(BabyBuyScreen.Login.name)
-                        viewModel.resetState()
-                    }
-                }
-
-                SignupScreenPreview(
-                    onSubmit = { email, password ->
-                        lifecycleOwner.lifecycleScope.launch {
-                            val result =
-                                googleAuthUiClient.signUpWithEmailAndPassword(email, password)
-                            viewModel.onSignUpResult(result);
-                        }
-                    },
-                    onLoginBtnClicked = { navController.navigate(BabyBuyScreen.Login.name) })
-            }
-
-            composable(route = BabyBuyScreen.Dashboard.name) {
-                DashboardScreenPreview()
-            }
         }
+
+        // Request media permissions
+        checkAndRequestPermissions()
     }
 }
-
