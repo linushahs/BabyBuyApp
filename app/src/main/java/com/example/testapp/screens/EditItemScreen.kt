@@ -1,8 +1,8 @@
 package com.example.testapp.screens
 
+import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -11,7 +11,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,10 +39,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,35 +56,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.testapp.LocalGoogleAuthUiClient
 import com.example.testapp.components.CustomTextField
 import com.example.testapp.ui.theme.BorderDarkColor
 import com.example.testapp.ui.theme.BorderPrimaryColor
 import com.example.testapp.ui.theme.DisabledPrimaryColor
 import com.example.testapp.ui.theme.LightBgColor
 import com.example.testapp.ui.theme.LightGrayColor
-import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor3
 import com.example.testapp.utils.dashedBorder
+import com.example.testapp.utils.getSingleItemFromDb
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.ktx.storage
-import java.io.File
 import java.util.UUID
 
 @Preview(showBackground = true, widthDp = 370, heightDp = 700)
 @Composable
-fun AddItemScreen(
+fun EditItemScreen(
+    itemId: String? = null,
     onBackBtnClick: () -> Unit = {},
-    onAddItemClick: (item: HashMap<String, Any>) -> Unit = {}
+    onUpdateItemClick: (item: HashMap<String, Any>) -> Unit = {}
 ) {
     val context = LocalContext.current;
 
-    var addingItem by remember { mutableStateOf(false) }
+    var updatingItem by remember { mutableStateOf(false) }
     val storage = FirebaseStorage.getInstance();
     val storageRef = storage.reference;
 
@@ -108,9 +103,34 @@ fun AddItemScreen(
     var itemPrice by remember { mutableStateOf("0") }
     var itemDescription by remember { mutableStateOf("") }
     var itemCategory by remember { mutableStateOf("") }
+    var pictureRef by remember { mutableStateOf("") }
 
     var supporterName by remember { mutableStateOf("") }
     var supporterContact by remember { mutableStateOf("") }
+
+    val db = FirebaseFirestore.getInstance();
+    val googleAuthUiClient = LocalGoogleAuthUiClient.current;
+
+    LaunchedEffect(key1 = Unit) {
+        val user = googleAuthUiClient.getSignedInUser();
+
+        if (user?.email != null && itemId != null) {
+            getSingleItemFromDb(db, user.email, itemId) { item ->
+                Log.d(ContentValues.TAG, "Items fetched $item")
+
+                imageUri = Uri.parse(item["picture"] as? String)
+                pictureRef = item["pictureRef"] as? String ?: ""
+                itemName = item["name"] as? String ?: ""
+                itemPrice = item["price"] as? String ?: ""
+                itemDescription = item["description"] as? String ?: ""
+                itemCategory = item["category"] as? String ?: ""
+
+                supporterName = (item["supporter"] as? Map<*, *>)?.get("name") as? String ?: ""
+                supporterContact =
+                    (item["supporter"] as? Map<*, *>)?.get("contact") as? String ?: ""
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -150,7 +170,7 @@ fun AddItemScreen(
                 }
 
                 Text(
-                    "Add new item",
+                    "Edit item",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -288,45 +308,47 @@ fun AddItemScreen(
 
             Button(
                 onClick = { ->
-                    addingItem = true
+                    updatingItem = true
                     val itemDetails = hashMapOf(
+                        "id" to itemId,
                         "name" to itemName,
                         "price" to itemPrice,
                         "category" to itemCategory,
                         "description" to itemDescription,
                         "picture" to imageUri,
+                        "pictureRef" to pictureRef,
                         "supporter" to mapOf(
                             "name" to supporterName,
                             "contact" to supporterContact
                         )
                     )
 
-                    handleAddItem(
-                        onAddItemClick,
+                    handleUpdateItem(
+                        onUpdateItemClick,
                         context,
                         itemDetails,
                         storageRef
                     ) {
-                        addingItem = false;
+                        updatingItem = false;
                     }
                 }, modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
                     .height(48.dp),
                 shape = RoundedCornerShape(7.dp),
-                enabled = !addingItem,
+                enabled = !updatingItem,
                 colors = ButtonDefaults.buttonColors(
                     disabledContainerColor = DisabledPrimaryColor
                 )
             ) {
-                if (addingItem) {
+                if (updatingItem) {
                     CircularProgressIndicator(
                         modifier = Modifier.width(32.dp),
                         color = Color.White
                     )
                 } else {
                     Text(
-                        "Add Item",
+                        "Update Item",
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.5.sp,
@@ -340,7 +362,7 @@ fun AddItemScreen(
     }
 }
 
-fun handleAddItem(
+fun handleUpdateItem(
     onAddItemClick: (item: HashMap<String, Any>) -> Unit,
     context: Context,
     item: HashMap<String, Any?>,
@@ -357,28 +379,38 @@ fun handleAddItem(
         );
 
     if (isValidationError == null) {
-        val uniqueImageName = UUID.randomUUID();
-        val uploadImageTask = storageRef.child("$uniqueImageName").putFile(item["picture"] as Uri);
+        Log.d(TAG, "Item update details ::: $item");
 
-        uploadImageTask.addOnSuccessListener {
-            storageRef.child("$uniqueImageName").downloadUrl.addOnSuccessListener { url ->
+        val isFirebaseUrl =
+            item["picture"].toString().startsWith("https://firebasestorage.googleapis.com")
 
-                item["picture"] = url.toString();
-                item["pictureRef"] = uniqueImageName.toString();
-                item["id"] = UUID.randomUUID().toString();
+        if (isFirebaseUrl) {
+            @Suppress("UNCHECKED_CAST")
+            onAddItemClick(item as HashMap<String, Any>)
 
-                @Suppress("UNCHECKED_CAST")
-                onAddItemClick(item as HashMap<String, Any>)
+            onComplete()
+        } else {
+            val uniqueImageName = item["pictureRef"] as? String;
+            val uploadImageTask =
+                storageRef.child("$uniqueImageName").putFile(item["picture"] as Uri);
 
+            uploadImageTask.addOnSuccessListener {
+                storageRef.child("$uniqueImageName").downloadUrl.addOnSuccessListener { url ->
+
+                    item["picture"] = url.toString();
+                    @Suppress("UNCHECKED_CAST")
+                    onAddItemClick(item as HashMap<String, Any>)
+
+                    onComplete();
+                }
+            }.addOnFailureListener {
                 onComplete();
+                Toast.makeText(
+                    context,
+                    "Failed to upload image.",
+                    Toast.LENGTH_LONG
+                ).show()
             }
-        }.addOnFailureListener {
-            onComplete();
-            Toast.makeText(
-                context,
-                "Failed to upload image.",
-                Toast.LENGTH_LONG
-            ).show()
         }
 
     } else {
@@ -388,29 +420,5 @@ fun handleAddItem(
             isValidationError,
             Toast.LENGTH_LONG
         ).show()
-    }
-}
-
-fun validateItemFields(
-    itemName: String,
-    itemCategory: String,
-    itemDescription: String,
-    itemPrice: String,
-    picture: Uri?
-): String? {
-    return when {
-        picture == null -> {
-            "Item picture is required"
-        }
-
-        itemName.isBlank() || itemCategory.isBlank() || itemDescription.isBlank() -> {
-            "The required fields cannot be empty"
-        }
-
-        itemPrice.toFloat() <= 0 -> {
-            "Price cannot be $itemPrice"
-        }
-
-        else -> null
     }
 }

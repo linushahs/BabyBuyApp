@@ -78,6 +78,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("com.google.android.gms:play-services-maps:18.0.0")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0")
     implementation("io.coil-kt:coil-compose:2.2.2")

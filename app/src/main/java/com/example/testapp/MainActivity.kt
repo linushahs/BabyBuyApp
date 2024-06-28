@@ -16,7 +16,14 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.os.Build
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.compositionLocalOf
 import com.google.firebase.storage.ktx.storage
+
+val LocalGoogleAuthUiClient: ProvidableCompositionLocal<FirebaseAuthClient> = compositionLocalOf<FirebaseAuthClient> {
+    error("GoogleAuthUiClient not provided")
+}
 
 class MainActivity : ComponentActivity() {
     private val googleAuthUiClient by lazy {
@@ -51,13 +58,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            BabyBuyAppTheme {
-                BabyBuyApp(
-                    googleAuthUiClient,
-                    lifecycleOwner = this, // Pass the Activity instance as LifecycleOwner
-                    context = applicationContext, // Pass the applicationContext
-                    db = db
-                )
+            CompositionLocalProvider(LocalGoogleAuthUiClient provides googleAuthUiClient) {
+                BabyBuyAppTheme {
+                    RouteController(
+                        googleAuthUiClient,
+                        lifecycleOwner = this, // Pass the Activity instance as LifecycleOwner
+                        context = applicationContext, // Pass the applicationContext
+                        db = db
+                    )
+                }
             }
         }
 

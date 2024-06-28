@@ -56,7 +56,10 @@ fun ItemCard(modifier: Modifier = Modifier, item: Map<String, Any>? = null) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(10.dp),
-        onClick = { navController.navigate(BabyBuyScreen.ItemDetails.name) }
+        onClick = {
+            val route = "${BabyBuyScreen.ItemDetails.name}/${item?.get("id")}"
+            navController.navigate(route)
+        }
     ) {
         Column {
             ImageCardSection(item?.get("picture") as? String ?: "")

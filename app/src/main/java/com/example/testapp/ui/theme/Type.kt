@@ -30,7 +30,7 @@ val Typography = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = fontFamily,
-        fontSize = 16.sp,
+        fontSize = 15.sp,
         fontWeight = FontWeight.Medium
     ),
     bodyLarge = TextStyle(

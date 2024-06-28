@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -56,6 +57,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
+import com.example.testapp.LocalGoogleAuthUiClient
 import com.example.testapp.ui.theme.BabyBuyAppTheme
 import com.example.testapp.R;
 import com.example.testapp.auth.FirebaseAuthClient
@@ -77,17 +80,21 @@ import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.utils.getItemsFromDb
 import com.google.firebase.firestore.FirebaseFirestore
 
+
 //@Preview(showBackground = true, widthDp = 370, heightDp = 700)
 @Composable
 fun DashboardScreen(
     onAddItemClick: () -> Unit = {},
-    googleAuthUiClient: FirebaseAuthClient,
-    db: FirebaseFirestore,
 ) {
+    val db = FirebaseFirestore.getInstance();
+    val googleAuthUiClient = LocalGoogleAuthUiClient.current;
+
     var searchInput by remember { mutableStateOf("") }
     val listOfItems = remember { mutableStateListOf<Map<String, Any>>() }
+    var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(key1 = Unit) {
+        isLoading = true
         val user = googleAuthUiClient.getSignedInUser();
 
         if (user?.email != null) {
@@ -95,129 +102,148 @@ fun DashboardScreen(
                 Log.d(TAG, "Items fetched $items")
                 listOfItems.clear()
                 listOfItems.addAll(items)
+                isLoading = false
             }
         }
     }
 
-    BabyBuyAppTheme {
-        Column(
-            modifier = Modifier
-                .padding(14.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    if (isLoading) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            /* Topbar profile and notifications options =================
+            CircularProgressIndicator(color = PrimaryColor, modifier = Modifier.size(42.dp))
+        }
+    } else {
+        BabyBuyAppTheme {
+            Column(
+                modifier = Modifier
+                    .padding(14.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                /* Topbar profile and notifications options =================
              ========================================================== */
-            Topbar(googleAuthUiClient)
+                Topbar(googleAuthUiClient)
 
-            /*
+                /*
                 Search bar
                 ================================
             */
-            SearchBar(searchInput = searchInput, onChange = { it -> searchInput = it })
+                SearchBar(searchInput = searchInput, onChange = { it -> searchInput = it })
 
-            /*
+                /*
                 Highlighted card and add item section
                 ======================================
              */
-            Card(
-                modifier = Modifier
-                    .height(150.dp)
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(9.dp),
-            ) {
-                Box() {
-                    Image(
-                        painter = painterResource(id = R.drawable.card_bg),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(top = 22.dp, start = 70.dp)
-                    ) {
-                        Text(
-                            text = "Baby Car Toy",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
+                Card(
+                    modifier = Modifier
+                        .height(150.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(9.dp),
+                ) {
+                    Box() {
+                        Image(
+                            painter = painterResource(id = R.drawable.card_bg),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(),
+                            contentScale = ContentScale.Crop
                         )
 
-                        Text(
-                            text = "The store offers a wide range of products.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = LightBgColor,
-                            modifier = Modifier.width(180.dp)
-                        )
-
-                        Row(
-                            modifier = Modifier.padding(top = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(18.dp)
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(top = 22.dp, start = 70.dp)
                         ) {
                             Text(
-                                text = "$ 40.05",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White,
+                                text = "Baby Items",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
 
-                                )
+                            Text(
+                                text = "The store offers variety of products, items.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LightBgColor,
+                                modifier = Modifier.width(180.dp)
+                            )
 
-                            /*
+                            Row(
+                                modifier = Modifier.padding(top = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(18.dp)
+                            ) {
+                                Text(
+                                    text = "$ 40.05",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White,
+
+                                    )
+
+                                /*
                                 View Rating ================
                              */
-                            ViewRating()
+                                ViewRating()
+                            }
+                        }
+
+                        Button(
+                            onClick = onAddItemClick,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier
+                                .width(115.dp)
+                                .height(46.dp)
+                                .align(Alignment.BottomEnd)
+                                .padding(8.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.plus_icon),
+                                tint = PrimaryColor,
+                                modifier = Modifier.size(16.dp),
+                                contentDescription = null
+                            )
+
+                            Text(
+                                "Add Item",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Black,
+                                modifier = Modifier.padding(start = 6.dp)
+                            )
                         }
                     }
-
-                    Button(
-                        onClick = onAddItemClick,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier
-                            .width(115.dp)
-                            .height(46.dp)
-                            .align(Alignment.BottomEnd)
-                            .padding(8.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.plus_icon),
-                            tint = PrimaryColor,
-                            modifier = Modifier.size(16.dp),
-                            contentDescription = null
-                        )
-
-                        Text(
-                            "Add Item",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Black,
-                            modifier = Modifier.padding(start = 6.dp)
-                        )
-                    }
                 }
-            }
 
-            /*
+                /*
                 List of categories (Scrollable)
                 # CategoryRow: Composable
                 ================================
             */
-            CategoryRow()
+                CategoryRow()
 
-            /*
+                /*
                  List of cards (Scrollable)
                  # ItemCard: Composable
                  ================================
              */
-            ItemsGrid(listOfItems)
-        }
+                if (listOfItems.isEmpty()) {
+                    Text(
+                        "No items available",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextColor1
+                    )
+                } else {
+                    ItemsGrid(listOfItems)
+                }
+            }
 
+        }
     }
 
 }

@@ -3,6 +3,7 @@ package com.example.testapp.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val PrimaryColor = Color(0xFF8368CF);
+val DisabledPrimaryColor = Color(0xFFB3A1E6)
 val LightPrimaryColor = Color(0xFFF0E8FA);
 
 val TextColor1 = Color(0xFF7D7D7D);

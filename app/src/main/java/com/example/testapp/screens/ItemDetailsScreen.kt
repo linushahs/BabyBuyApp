@@ -1,5 +1,8 @@
 package com.example.testapp.screens
 
+import android.content.ContentValues
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -15,16 +18,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,20 +46,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import com.example.testapp.BabyBuyScreen
+import com.example.testapp.LocalGoogleAuthUiClient
+import com.example.testapp.LocalNavController
 import com.example.testapp.R
+import com.example.testapp.auth.FirebaseAuthClient
 import com.example.testapp.components.FavButtonVariants
 import com.example.testapp.components.FavoriteButton
 import com.example.testapp.components.ViewRating
 import com.example.testapp.ui.theme.BorderPrimaryColor
+import com.example.testapp.ui.theme.DisabledPrimaryColor
 import com.example.testapp.ui.theme.LightBgColor
 import com.example.testapp.ui.theme.LightGrayColor
+import com.example.testapp.ui.theme.LightPrimaryColor
 import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.ui.theme.TextColor2
+import com.example.testapp.utils.getItemsFromDb
+import com.example.testapp.utils.getSingleItemFromDb
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
 
 @Preview(showBackground = true, widthDp = 370, heightDp = 700)
 @Composable
-fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
+fun ItemDetailsScreen(
+    onBackBtnClick: () -> Unit = {},
+    itemId: String? = null
+) {
+    var itemDetails by remember { mutableStateOf<Map<String, Any>?>(null) }
+    val db = FirebaseFirestore.getInstance();
+    val googleAuthUiClient = LocalGoogleAuthUiClient.current;
+    val navController = LocalNavController.current;
+
+    LaunchedEffect(key1 = Unit) {
+        val user = googleAuthUiClient.getSignedInUser();
+
+        if (user?.email != null && itemId != null) {
+            getSingleItemFromDb(db, user.email, itemId) { item ->
+                Log.d(ContentValues.TAG, "Items fetched $item")
+
+                itemDetails = item;
+            }
+        }
+    }
+
+    Log.d(TAG, "Item details ::: $itemDetails");
+
     Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
         Surface(
             color = LightGrayColor,
@@ -90,13 +136,16 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 20.dp, top = 8.dp)
+                        .padding(bottom = 28.dp, top = 8.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.toy), contentDescription = null,
+                        painter = rememberAsyncImagePainter(itemDetails?.get("picture")),
+                        contentDescription = null,
                         modifier = Modifier.size(160.dp)
                     )
                 }
+
+
             }
 
         }
@@ -118,7 +167,7 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                         contentAlignment = Alignment.Center  // Center the content
                     ) {
                         Text(
-                            text = "Toy",
+                            text = itemDetails?.get("category") as? String ?: "",
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                             color = Color.White
@@ -132,14 +181,21 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Baby Car Toy", style = MaterialTheme.typography.titleMedium)
-                Text("$ 40.05", style = MaterialTheme.typography.bodyMedium, color = PrimaryColor)
+                Text(
+                    text = itemDetails?.get("name") as? String ?: "",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "$ " + itemDetails?.get("price") as? String,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = PrimaryColor
+                )
             }
 
             ViewRating(textFontSize = 13.sp, modifier = Modifier.size(16.dp))
 
             Text(
-                "The store offers a wide range of products essential for baby care supplies. The store offers a wide range of products essential for baby care supplies.",
+                itemDetails?.get("description") as? String ?: "",
                 style = MaterialTheme.typography.labelSmall,
                 color = TextColor1,
                 fontWeight = FontWeight.Normal,
@@ -153,7 +209,9 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
 
 
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             /*
@@ -171,7 +229,8 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Name:", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        "John Doe", style = MaterialTheme.typography.labelMedium,
+                        (itemDetails?.get("supporter") as? Map<*, *>)?.get("name") as? String ?: "",
+                        style = MaterialTheme.typography.labelMedium,
                         color = TextColor1
                     )
                 }
@@ -179,7 +238,9 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Contact:", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        "9811201293", style = MaterialTheme.typography.labelMedium,
+                        (itemDetails?.get("supporter") as? Map<*, *>)?.get("contact") as? String
+                            ?: "",
+                        style = MaterialTheme.typography.labelMedium,
                         color = TextColor1
                     )
                 }
@@ -206,5 +267,23 @@ fun ItemDetailsScreen(onBackBtnClick: () -> Unit = {}) {
                 )
             }
         }
+
+
+        Button(
+            onClick = {
+                val route = "${BabyBuyScreen.EditItem.name}/$itemId"
+                navController.navigate(route)
+            },
+            shape = RoundedCornerShape(7.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryColor
+            ),
+            modifier = Modifier
+                .wrapContentWidth()
+                .height(42.dp).padding(horizontal = 16.dp),
+        ) {
+            Text("Edit item")
+        }
+
     }
 }

@@ -20,19 +20,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.testapp.auth.FirebaseAuthClient
 import com.example.testapp.auth.SignInViewModel
 import com.example.testapp.auth.SignUpViewModel
 import com.example.testapp.screens.AddItemScreen
 import com.example.testapp.screens.DashboardScreen
+import com.example.testapp.screens.EditItemScreen
 import com.example.testapp.screens.GetStartedScreenPreview
 import com.example.testapp.screens.ItemDetailsScreen
 import com.example.testapp.screens.LoginScreenPreview
 import com.example.testapp.screens.SignupScreenPreview
 import com.example.testapp.utils.addItemToDb
+import com.example.testapp.utils.updateItemOfDb
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
@@ -43,6 +47,7 @@ enum class BabyBuyScreen() {
     Dashboard,
     GetStarted,
     AddItem,
+    EditItem,
     ItemDetails
 }
 
@@ -52,7 +57,7 @@ val LocalNavController = compositionLocalOf<NavHostController> {
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun BabyBuyApp(
+fun RouteController(
     googleAuthUiClient: FirebaseAuthClient,
     lifecycleOwner: LifecycleOwner,
     context: Context,
@@ -68,6 +73,12 @@ fun BabyBuyApp(
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable(route = BabyBuyScreen.GetStarted.name) {
+                    LaunchedEffect(key1 = Unit) {
+                        if (googleAuthUiClient.getSignedInUser() != null) {
+                            navController.navigate(BabyBuyScreen.Dashboard.name)
+                        }
+                    }
+
                     GetStartedScreenPreview(onGetStartedClicked = {
                         navController.navigate(
                             BabyBuyScreen.Login.name
@@ -165,9 +176,7 @@ fun BabyBuyApp(
 
                 composable(route = BabyBuyScreen.Dashboard.name) {
                     DashboardScreen(
-                        onAddItemClick = { navController.navigate(BabyBuyScreen.AddItem.name) },
-                        googleAuthUiClient,
-                        db
+                        onAddItemClick = { navController.navigate(BabyBuyScreen.AddItem.name) }
                     )
                 }
 
@@ -186,8 +195,26 @@ fun BabyBuyApp(
                     })
                 }
 
-                composable(route = BabyBuyScreen.ItemDetails.name) {
-                    ItemDetailsScreen(onBackBtnClick = { navController.navigate(BabyBuyScreen.Dashboard.name) })
+                composable(route = "${BabyBuyScreen.ItemDetails.name}/{itemId}",
+                    arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+                ) {backStackEntry ->
+                    val itemId = backStackEntry.arguments?.getString("itemId")
+                    ItemDetailsScreen(onBackBtnClick = { navController.navigate(BabyBuyScreen.Dashboard.name) }, itemId = itemId)
+                }
+
+                composable(route = "${BabyBuyScreen.EditItem.name}/{itemId}",
+                    arguments = listOf(navArgument("itemId") { type = NavType.StringType })
+                ) {backStackEntry ->
+                    val itemId = backStackEntry.arguments?.getString("itemId")
+                    EditItemScreen(onBackBtnClick = { navController.navigate(BabyBuyScreen.Dashboard.name) }, itemId = itemId,
+                        onUpdateItemClick = {item ->
+                            lifecycleOwner.lifecycleScope.launch {
+                                val user = googleAuthUiClient.getSignedInUser();
+                                if (user?.email != null) {
+                                    updateItemOfDb(db, context, item, userId = user.email)
+                                }
+                            }
+                        })
                 }
             }
         }
