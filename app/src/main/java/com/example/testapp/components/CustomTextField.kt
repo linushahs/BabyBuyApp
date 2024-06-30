@@ -8,12 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -21,8 +23,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.testapp.ui.theme.BorderPrimaryColor
+
+@Preview(widthDp = 320)
+@Composable
+fun SurfaceField() {
+    Surface(
+        content = { Text("P*&G+QRF, Sama marga, Kathmandu, 44600 Nepal, 203923 Baneshwor", style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+            lineHeight = 18.sp) },
+        border = BorderStroke(1.dp, BorderPrimaryColor),
+        shape = RoundedCornerShape(6.dp),
+        modifier = Modifier.fillMaxWidth()
+    )
+}
 
 @Composable
 public fun CustomTextField(
@@ -71,7 +88,7 @@ public fun CustomTextField(
                     border = BorderStroke(1.dp, borderColor),
                     shape = RoundedCornerShape(7.dp)
                 )
-                .height(48.dp)
+                .heightIn(min = 48.dp)
                 .fillMaxWidth(),
         )
     }

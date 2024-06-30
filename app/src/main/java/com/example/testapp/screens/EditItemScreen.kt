@@ -67,6 +67,7 @@ import com.example.testapp.ui.theme.LightGrayColor
 import com.example.testapp.ui.theme.TextColor3
 import com.example.testapp.utils.dashedBorder
 import com.example.testapp.utils.getSingleItemFromDb
+import com.example.testapp.utils.validateItemFields
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference

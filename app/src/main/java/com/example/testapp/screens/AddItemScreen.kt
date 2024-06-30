@@ -1,11 +1,7 @@
 package com.example.testapp.screens
 
-import android.content.ContentValues.TAG
-import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -68,7 +66,11 @@ import com.example.testapp.ui.theme.LightBgColor
 import com.example.testapp.ui.theme.LightGrayColor
 import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor3
+import com.example.testapp.utils.GoogleMapBox
 import com.example.testapp.utils.dashedBorder
+import com.example.testapp.utils.getPlaceNameFromCoordinates
+import com.example.testapp.utils.handleAddItem
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -111,6 +113,15 @@ fun AddItemScreen(
 
     var supporterName by remember { mutableStateOf("") }
     var supporterContact by remember { mutableStateOf("") }
+
+    var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+    var placeName by remember { mutableStateOf("") }
+
+    LaunchedEffect(selectedLocation) {
+        selectedLocation?.let { latLng ->
+            placeName = getPlaceNameFromCoordinates(latLng)  // Function to fetch place name
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -235,6 +246,33 @@ fun AddItemScreen(
                 label = "Description",
                 modifier = Modifier.height(110.dp)
             )
+
+            /*
+                Google map box =========================================
+                =======================================================
+             */
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Location", style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(start = 3.dp)
+                )
+                Surface(
+                    content = { Text(placeName, style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 12.dp),
+                        lineHeight = 18.sp) },
+                    border = BorderStroke(1.dp, BorderPrimaryColor),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                )
+                GoogleMapBox(
+                    paddingValues = PaddingValues(0.dp),
+                    onLocationSelected = { latLng ->
+                        selectedLocation = latLng
+                    })
+            }
         }
 
         // Full width line
@@ -262,7 +300,6 @@ fun AddItemScreen(
             Supporter form elements ==========================
             Name, contact ====================================
          */
-
         Column(
             modifier = Modifier.padding(horizontal = 14.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -295,6 +332,8 @@ fun AddItemScreen(
                         "category" to itemCategory,
                         "description" to itemDescription,
                         "picture" to imageUri,
+                        "coordinates" to selectedLocation,
+                        "placeName" to placeName,
                         "supporter" to mapOf(
                             "name" to supporterName,
                             "contact" to supporterContact
@@ -335,82 +374,6 @@ fun AddItemScreen(
                 }
             }
         }
-
-
     }
 }
 
-fun handleAddItem(
-    onAddItemClick: (item: HashMap<String, Any>) -> Unit,
-    context: Context,
-    item: HashMap<String, Any?>,
-    storageRef: StorageReference,
-    onComplete: () -> Unit
-) {
-    val isValidationError =
-        validateItemFields(
-            item["name"] as? String ?: "",
-            item["category"] as? String ?: "",
-            item["description"] as? String ?: "",
-            item["price"] as? String ?: "",
-            item["picture"] as? Uri
-        );
-
-    if (isValidationError == null) {
-        val uniqueImageName = UUID.randomUUID();
-        val uploadImageTask = storageRef.child("$uniqueImageName").putFile(item["picture"] as Uri);
-
-        uploadImageTask.addOnSuccessListener {
-            storageRef.child("$uniqueImageName").downloadUrl.addOnSuccessListener { url ->
-
-                item["picture"] = url.toString();
-                item["pictureRef"] = uniqueImageName.toString();
-                item["id"] = UUID.randomUUID().toString();
-
-                @Suppress("UNCHECKED_CAST")
-                onAddItemClick(item as HashMap<String, Any>)
-
-                onComplete();
-            }
-        }.addOnFailureListener {
-            onComplete();
-            Toast.makeText(
-                context,
-                "Failed to upload image.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
-    } else {
-        onComplete();
-        Toast.makeText(
-            context,
-            isValidationError,
-            Toast.LENGTH_LONG
-        ).show()
-    }
-}
-
-fun validateItemFields(
-    itemName: String,
-    itemCategory: String,
-    itemDescription: String,
-    itemPrice: String,
-    picture: Uri?
-): String? {
-    return when {
-        picture == null -> {
-            "Item picture is required"
-        }
-
-        itemName.isBlank() || itemCategory.isBlank() || itemDescription.isBlank() -> {
-            "The required fields cannot be empty"
-        }
-
-        itemPrice.toFloat() <= 0 -> {
-            "Price cannot be $itemPrice"
-        }
-
-        else -> null
-    }
-}

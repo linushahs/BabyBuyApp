@@ -19,9 +19,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,6 +58,7 @@ import com.example.testapp.R
 import com.example.testapp.auth.FirebaseAuthClient
 import com.example.testapp.components.FavButtonVariants
 import com.example.testapp.components.FavoriteButton
+import com.example.testapp.components.ThreeDotsDropdown
 import com.example.testapp.components.ViewRating
 import com.example.testapp.ui.theme.BorderPrimaryColor
 import com.example.testapp.ui.theme.DisabledPrimaryColor
@@ -63,8 +68,10 @@ import com.example.testapp.ui.theme.LightPrimaryColor
 import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.ui.theme.TextColor2
+import com.example.testapp.utils.GoogleMapBox
 import com.example.testapp.utils.getItemsFromDb
 import com.example.testapp.utils.getSingleItemFromDb
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 
@@ -93,7 +100,12 @@ fun ItemDetailsScreen(
 
     Log.d(TAG, "Item details ::: $itemDetails");
 
-    Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(22.dp),
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 8.dp)
+    ) {
         Surface(
             color = LightGrayColor,
             shape = RoundedCornerShape(bottomStart = 42.dp, bottomEnd = 42.dp),
@@ -106,7 +118,7 @@ fun ItemDetailsScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(10.dp)
+                        .padding(start = 10.dp, top = 10.dp, bottom = 10.dp, end = 4.dp)
                 ) {
                     OutlinedButton(
                         onClick = onBackBtnClick,
@@ -129,7 +141,25 @@ fun ItemDetailsScreen(
                         style = MaterialTheme.typography.bodyLarge,
                     )
 
-                    FavoriteButton(onClick = { /*TODO*/ }, variants = FavButtonVariants.Default)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FavoriteButton(onClick = { /*TODO*/ }, variants = FavButtonVariants.Default)
+
+                        ThreeDotsDropdown(
+                            onItemClick = { item ->
+                                when (item) {
+                                    "Edit" -> {
+                                        val route = "${BabyBuyScreen.EditItem.name}/$itemId"
+                                        navController.navigate(route)
+                                    }
+
+                                    "Delete" -> {
+                                    }
+                                }
+                            }
+                        )
+                    }
                 }
 
                 Row(
@@ -141,7 +171,7 @@ fun ItemDetailsScreen(
                     Image(
                         painter = rememberAsyncImagePainter(itemDetails?.get("picture")),
                         contentDescription = null,
-                        modifier = Modifier.size(160.dp)
+                        modifier = Modifier.size(180.dp)
                     )
                 }
 
@@ -151,8 +181,8 @@ fun ItemDetailsScreen(
         }
 
         /*
-        Basic item information ================================
-        =======================================================
+            Basic item information ================================
+            =======================================================
          */
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -212,13 +242,13 @@ fun ItemDetailsScreen(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 6.dp)
                 .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             /*
             Supporter information ===========================
             =================================================
              */
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Supporter",
                     style = MaterialTheme.typography.bodyMedium,
@@ -252,7 +282,7 @@ fun ItemDetailsScreen(
              */
             Column(
                 verticalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier.width(140.dp)
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = "Geotag",
@@ -261,28 +291,28 @@ fun ItemDetailsScreen(
                 )
 
                 Text(
-                    "Baneshwor Area, Kathmandu", style = MaterialTheme.typography.labelMedium,
+                    text = itemDetails?.get("placeName") as? String ?: "",
+
+                    style = MaterialTheme.typography.labelMedium,
                     color = TextColor1,
                     lineHeight = 20.sp
                 )
             }
         }
 
-
-        Button(
-            onClick = {
-                val route = "${BabyBuyScreen.EditItem.name}/$itemId"
-                navController.navigate(route)
-            },
-            shape = RoundedCornerShape(7.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryColor
-            ),
-            modifier = Modifier
-                .wrapContentWidth()
-                .height(42.dp).padding(horizontal = 16.dp),
-        ) {
-            Text("Edit item")
+        /*
+            Google map box display =================================
+            ========================================================
+         */
+        (itemDetails?.get("coordinates") as? Map<*, *>)?.let {
+            GoogleMapBox(
+                paddingValues = PaddingValues(horizontal = 16.dp),
+                coordinates = LatLng(
+                    it["latitude"] as? Double ?: 0.0,
+                    it["longitude"] as? Double ?: 0.0
+                ),
+                showOnlyMarker = true
+            )
         }
 
     }

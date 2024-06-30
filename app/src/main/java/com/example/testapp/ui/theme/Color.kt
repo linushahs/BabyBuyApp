@@ -21,3 +21,5 @@ val YellowColor = Color(0xFFFBBC05);
 
 val GradientColor1 = Color(0xFF8C48E2);
 val GradientColor2 = Color(0xFFDB77A1);
+
+val RedColor = Color(0xFFed3b3b)
