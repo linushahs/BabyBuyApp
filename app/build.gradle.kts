@@ -5,6 +5,15 @@ plugins {
 }
 
 android {
+//    signingConfigs {
+//        getByName("debug") {
+//            storeFile =
+//                file("/home/linushahs/AndroidStudioProjects/TestApp/app/build/outputs/apk/release/app-release-unsigned.apk")
+//            keyAlias = "MyAndroidKey"
+//            keyPassword = "traveler@048"
+//            storePassword = "traveler@048"
+//        }
+//    }
     namespace = "com.example.testapp"
     compileSdk = 34
 
@@ -28,6 +37,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

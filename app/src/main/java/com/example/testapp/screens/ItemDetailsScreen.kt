@@ -3,6 +3,7 @@ package com.example.testapp.screens
 import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -69,6 +71,7 @@ import com.example.testapp.ui.theme.PrimaryColor
 import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.ui.theme.TextColor2
 import com.example.testapp.utils.GoogleMapBox
+import com.example.testapp.utils.deleteItemFromDb
 import com.example.testapp.utils.getItemsFromDb
 import com.example.testapp.utils.getSingleItemFromDb
 import com.google.android.gms.maps.model.LatLng
@@ -85,6 +88,7 @@ fun ItemDetailsScreen(
     val db = FirebaseFirestore.getInstance();
     val googleAuthUiClient = LocalGoogleAuthUiClient.current;
     val navController = LocalNavController.current;
+    val context = LocalContext.current;
 
     LaunchedEffect(key1 = Unit) {
         val user = googleAuthUiClient.getSignedInUser();
@@ -155,6 +159,17 @@ fun ItemDetailsScreen(
                                     }
 
                                     "Delete" -> {
+                                        val user = googleAuthUiClient.getSignedInUser();
+                                            if (itemId != null && user?.email != null) {
+                                                deleteItemFromDb(db, userId = user.email, itemId ){msg ->
+                                                    Toast.makeText(
+                                                        context,
+                                                        msg,
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
+                                            }
+                                        navController.navigate(BabyBuyScreen.Dashboard.name)
                                     }
                                 }
                             }

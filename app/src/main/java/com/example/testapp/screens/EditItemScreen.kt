@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,9 +66,12 @@ import com.example.testapp.ui.theme.DisabledPrimaryColor
 import com.example.testapp.ui.theme.LightBgColor
 import com.example.testapp.ui.theme.LightGrayColor
 import com.example.testapp.ui.theme.TextColor3
+import com.example.testapp.utils.GoogleMapBox
 import com.example.testapp.utils.dashedBorder
+import com.example.testapp.utils.getPlaceNameFromCoordinates
 import com.example.testapp.utils.getSingleItemFromDb
 import com.example.testapp.utils.validateItemFields
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
@@ -112,6 +116,9 @@ fun EditItemScreen(
     val db = FirebaseFirestore.getInstance();
     val googleAuthUiClient = LocalGoogleAuthUiClient.current;
 
+    var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
+    var placeName by remember { mutableStateOf("") }
+
     LaunchedEffect(key1 = Unit) {
         val user = googleAuthUiClient.getSignedInUser();
 
@@ -129,7 +136,19 @@ fun EditItemScreen(
                 supporterName = (item["supporter"] as? Map<*, *>)?.get("name") as? String ?: ""
                 supporterContact =
                     (item["supporter"] as? Map<*, *>)?.get("contact") as? String ?: ""
+
+                selectedLocation = LatLng(
+                    (item["coordinates"] as? Map<*, *>)?.get("latitude") as? Double ?: 0.0,
+                    (item["coordinates"] as? Map<*, *>)?.get("longitude") as? Double ?: 0.0
+                )
+                placeName = item["placeName"] as? String ?: ""
             }
+        }
+    }
+
+    LaunchedEffect(selectedLocation) {
+        selectedLocation?.let { latLng ->
+            placeName = getPlaceNameFromCoordinates(latLng)  // Function to fetch place name
         }
     }
 
@@ -256,6 +275,42 @@ fun EditItemScreen(
                 label = "Description",
                 modifier = Modifier.height(110.dp)
             )
+
+            /*
+             Google map box =========================================
+             =======================================================
+          */
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Location", style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(start = 3.dp)
+                )
+                Surface(
+                    content = {
+                        Text(
+                            placeName, style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
+                            lineHeight = 18.sp
+                        )
+                    },
+                    border = BorderStroke(1.dp, BorderPrimaryColor),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                )
+                selectedLocation?.let {
+                    GoogleMapBox(
+                        coordinates = it,
+                        paddingValues = PaddingValues(0.dp),
+                        onLocationSelected = { latLng ->
+                            selectedLocation = latLng
+                        })
+                }
+            }
         }
 
         // Full width line
@@ -316,6 +371,8 @@ fun EditItemScreen(
                         "price" to itemPrice,
                         "category" to itemCategory,
                         "description" to itemDescription,
+                        "coordinates" to selectedLocation,
+                        "placeName" to placeName,
                         "picture" to imageUri,
                         "pictureRef" to pictureRef,
                         "supporter" to mapOf(

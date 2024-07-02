@@ -97,3 +97,16 @@ fun getSingleItemFromDb(
             Log.w(TAG, "Error getting documents.", exception)
         }
 }
+
+fun deleteItemFromDb(db: FirebaseFirestore, userId: String, docId: String, onItemDeleted: (msg: String) -> Unit){
+    db.collection(userId).document(docId)
+        .delete()
+        .addOnSuccessListener {
+            onItemDeleted("Deleted item successfully.");
+        }
+        .addOnFailureListener{exception ->
+            val msg = "Error deleting document."
+            Log.w(TAG, msg, exception)
+            onItemDeleted(msg)
+        }
+}
