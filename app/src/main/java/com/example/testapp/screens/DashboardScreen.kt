@@ -38,6 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +57,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.testapp.LocalGoogleAuthUiClient
@@ -75,7 +77,9 @@ import com.example.testapp.components.SearchBar
 import com.example.testapp.components.Topbar
 import com.example.testapp.components.ViewRating
 import com.example.testapp.ui.theme.BorderSecondaryColor
+import com.example.testapp.ui.theme.GradientColor2
 import com.example.testapp.ui.theme.LightBgColor
+import com.example.testapp.ui.theme.LightGrayColor
 import com.example.testapp.ui.theme.TextColor1
 import com.example.testapp.utils.getItemsFromDb
 import com.google.firebase.firestore.FirebaseFirestore
@@ -129,15 +133,15 @@ fun DashboardScreen(
                 Topbar(googleAuthUiClient)
 
                 /*
-                Search bar
-                ================================
-            */
+                    Search bar
+                    ================================
+                */
                 SearchBar(searchInput = searchInput, onChange = { it -> searchInput = it })
 
                 /*
-                Highlighted card and add item section
-                ======================================
-             */
+                    Highlighted card and add item section
+                    ======================================
+                 */
                 Card(
                     modifier = Modifier
                         .height(150.dp)
@@ -174,18 +178,28 @@ fun DashboardScreen(
                             Row(
                                 modifier = Modifier.padding(top = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(18.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Text(
-                                    text = "$ 40.05",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White,
-
-                                    )
+                                Surface(
+                                    content = {
+                                        Text(
+                                            "$ Fixed price",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = PrimaryColor,
+                                            fontSize = 10.sp,
+                                            modifier = Modifier.padding(
+                                                horizontal = 7.dp,
+                                                vertical = 4.dp
+                                            )
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(5.dp),
+                                    color = LightGrayColor
+                                )
 
                                 /*
                                 View Rating ================
-                             */
+                               */
                                 ViewRating()
                             }
                         }

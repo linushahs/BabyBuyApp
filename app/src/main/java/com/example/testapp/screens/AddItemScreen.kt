@@ -59,6 +59,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.testapp.components.CustomTextField
+import com.example.testapp.components.LocationField
 import com.example.testapp.components.PhotoPicker
 import com.example.testapp.ui.theme.BorderDarkColor
 import com.example.testapp.ui.theme.BorderPrimaryColor
@@ -104,7 +105,7 @@ fun AddItemScreen(
     var supporterContact by remember { mutableStateOf("") }
 
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
-    var placeName by remember { mutableStateOf("") }
+    var placeName by remember { mutableStateOf("Select location on the map") }
 
     LaunchedEffect(selectedLocation) {
         selectedLocation?.let { latLng ->
@@ -202,32 +203,11 @@ fun AddItemScreen(
             )
 
             /*
-                Google map box =========================================
+                Location field =========================================
                 =======================================================
              */
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Location", style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(start = 3.dp)
-                )
-                Surface(
-                    content = { Text(placeName, style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
-                        lineHeight = 18.sp) },
-                    border = BorderStroke(1.dp, BorderPrimaryColor),
-                    shape = RoundedCornerShape(6.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                )
-                GoogleMapBox(
-                    paddingValues = PaddingValues(0.dp),
-                    onLocationSelected = { latLng ->
-                        selectedLocation = latLng
-                    })
+            LocationField(placeName = placeName) { latlng ->
+                selectedLocation = latlng
             }
         }
 

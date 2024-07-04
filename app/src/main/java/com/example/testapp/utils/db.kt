@@ -14,16 +14,13 @@ fun addItemToDb(
     userId: String
 ) {
     (item["id"] as? String)?.let {
-        db.collection(userId)
-            .document(it)
-            .set(item)
-            .addOnSuccessListener {
-                Toast.makeText(
-                    context,
-                    "Added Item successfully.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+        db.collection(userId).document(it).set(item).addOnSuccessListener {
+            Toast.makeText(
+                context,
+                "Added Item successfully.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
             .addOnFailureListener { e ->
                 Log.w(ContentValues.TAG, "Error adding document", e)
             }
@@ -39,9 +36,7 @@ fun updateItemOfDb(
     Log.d(TAG, "Db item ::: $item");
 
     (item["id"] as? String)?.let {
-        db.collection(userId)
-            .document(it)
-            .update(item)
+        db.collection(userId).document(it).update(item)
             .addOnSuccessListener {
                 Toast.makeText(
                     context,
@@ -98,13 +93,16 @@ fun getSingleItemFromDb(
         }
 }
 
-fun deleteItemFromDb(db: FirebaseFirestore, userId: String, docId: String, onItemDeleted: (msg: String) -> Unit){
-    db.collection(userId).document(docId)
-        .delete()
+fun deleteItemFromDb(
+    db: FirebaseFirestore, userId: String,
+    docId: String,
+    onItemDeleted: (msg: String) -> Unit
+) {
+    db.collection(userId).document(docId).delete()
         .addOnSuccessListener {
             onItemDeleted("Deleted item successfully.");
         }
-        .addOnFailureListener{exception ->
+        .addOnFailureListener { exception ->
             val msg = "Error deleting document."
             Log.w(TAG, msg, exception)
             onItemDeleted(msg)

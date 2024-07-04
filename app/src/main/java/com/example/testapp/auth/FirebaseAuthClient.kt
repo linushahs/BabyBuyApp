@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.util.Log
+import android.widget.Toast
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -14,6 +15,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import com.example.testapp.R
 import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 
 class FirebaseAuthClient(
@@ -22,14 +24,14 @@ class FirebaseAuthClient(
 ) {
     private val auth = Firebase.auth;
 
-    suspend fun signIn(): IntentSender?{
-        val result = try{
+    suspend fun signIn(): IntentSender? {
+        val result = try {
             oneTapClient.beginSignIn(
                 buildSignInRequest()
             ).await()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             e.printStackTrace()
-            if(e is CancellationException) throw e
+            if (e is CancellationException) throw e
             null
         };
 
@@ -53,9 +55,9 @@ class FirebaseAuthClient(
                 },
                 errorMessage = null
             )
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
-            if(e is CancellationException) throw e
+            if (e is CancellationException) throw e
             AuthResult(
                 data = null,
                 errorMessage = e.message
@@ -80,6 +82,11 @@ class FirebaseAuthClient(
             )
         } catch (e: Exception) {
             Log.w(TAG, "signInWithEmailAndPassword:failure", e)
+            Toast.makeText(
+                context,
+                e.message,
+                Toast.LENGTH_LONG
+            ).show()
             AuthResult(
                 data = null,
                 errorMessage = e.message
@@ -104,6 +111,11 @@ class FirebaseAuthClient(
             )
         } catch (e: Exception) {
             Log.w(TAG, "signInWithEmailAndPassword:failure", e)
+            Toast.makeText(
+                context,
+                "Invalid credentials",
+                Toast.LENGTH_LONG
+            ).show()
             AuthResult(
                 data = null,
                 errorMessage = e.message
@@ -120,9 +132,9 @@ class FirebaseAuthClient(
         try {
             oneTapClient.signOut().await()
             auth.signOut()
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
-            if(e is CancellationException) throw e
+            if (e is CancellationException) throw e
         }
     }
 

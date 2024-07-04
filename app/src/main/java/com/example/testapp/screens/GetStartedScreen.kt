@@ -101,9 +101,8 @@ fun GetStartedScreenPreview(onGetStartedClicked: () -> Unit = {}) {
                         )
                     }
 
-
                     Text(
-                        text = "The store offers a wide range of products essential for baby care supplies.",
+                        text = "It helps parents organize and manage baby essentials with detailed lists and delegation features.",
                         style = MaterialTheme.typography.labelMedium,
                         color = TextColor1,
                         textAlign = TextAlign.Center,

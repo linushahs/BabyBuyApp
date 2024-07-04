@@ -72,7 +72,7 @@ public fun CustomPasswordField(
         },
         colors = TextFieldDefaults.colors(
             unfocusedContainerColor = TextFieldColor,
-            focusedContainerColor = Color.White,
+            focusedContainerColor = TextFieldColor,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent

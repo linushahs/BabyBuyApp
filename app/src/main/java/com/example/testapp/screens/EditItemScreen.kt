@@ -60,6 +60,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.testapp.LocalGoogleAuthUiClient
 import com.example.testapp.components.CustomTextField
+import com.example.testapp.components.LocationField
+import com.example.testapp.components.PhotoPicker
 import com.example.testapp.ui.theme.BorderDarkColor
 import com.example.testapp.ui.theme.BorderPrimaryColor
 import com.example.testapp.ui.theme.DisabledPrimaryColor
@@ -92,18 +94,6 @@ fun EditItemScreen(
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val pickMedia = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri ->
-            if (uri != null) {
-                Log.d("PhotoPicker", "Selected URI: $uri")
-                imageUri = uri
-            } else {
-                Log.d("PhotoPicker", "No media selected")
-            }
-        }
-    )
-
     var itemName by remember { mutableStateOf("") }
     var itemPrice by remember { mutableStateOf("0") }
     var itemDescription by remember { mutableStateOf("") }
@@ -117,7 +107,7 @@ fun EditItemScreen(
     val googleAuthUiClient = LocalGoogleAuthUiClient.current;
 
     var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
-    var placeName by remember { mutableStateOf("") }
+    var placeName by remember { mutableStateOf("Select location on the map") }
 
     LaunchedEffect(key1 = Unit) {
         val user = googleAuthUiClient.getSignedInUser();
@@ -196,47 +186,13 @@ fun EditItemScreen(
                 )
             }
 
+
             /*
-            Form elements ==========================
-            ========================================
-         */
-            Surface(
-                onClick = { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
-                color = LightGrayColor, shape = RoundedCornerShape(9.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .dashedBorder(BorderDarkColor, RoundedCornerShape(9.dp), 1.dp)
-            ) {
-                if (imageUri != null) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageUri)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = null,
-                        modifier = Modifier.size(100.dp)
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Default.Image,
-                            contentDescription = null,
-                            modifier = Modifier.size(38.dp),
-                            tint = TextColor3
-                        )
-                        Spacer(modifier = Modifier.size(9.dp))
-                        Text(
-                            text = "Upload item picture",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = TextColor3
-                        )
-                    }
-                }
+                Photo Picker ==============================
+                ==========================================
+            */
+            PhotoPicker(imageUri = imageUri) { uri ->
+                imageUri = uri
             }
 
             /*
@@ -279,38 +235,11 @@ fun EditItemScreen(
             /*
              Google map box =========================================
              =======================================================
-          */
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Location", style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(start = 3.dp)
-                )
-                Surface(
-                    content = {
-                        Text(
-                            placeName, style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp),
-                            lineHeight = 18.sp
-                        )
-                    },
-                    border = BorderStroke(1.dp, BorderPrimaryColor),
-                    shape = RoundedCornerShape(6.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                )
-                selectedLocation?.let {
-                    GoogleMapBox(
-                        coordinates = it,
-                        paddingValues = PaddingValues(0.dp),
-                        onLocationSelected = { latLng ->
-                            selectedLocation = latLng
-                        })
-                }
+            */
+            LocationField(selectedLocation = selectedLocation, placeName = placeName) { latlng ->
+                selectedLocation = latlng
             }
+
         }
 
         // Full width line

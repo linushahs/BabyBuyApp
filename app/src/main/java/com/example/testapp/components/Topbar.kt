@@ -29,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,18 +41,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.testapp.BabyBuyScreen
+import com.example.testapp.LocalNavController
 import com.example.testapp.R
 import com.example.testapp.auth.FirebaseAuthClient
 import com.example.testapp.auth.SignInViewModel
 import com.example.testapp.auth.UserData
 import com.example.testapp.ui.theme.BorderPrimaryColor
 import com.example.testapp.ui.theme.LightBgColor
+import kotlinx.coroutines.launch
 
 @Composable
 public fun Topbar(googleAuthClient: FirebaseAuthClient, modifier: Modifier = Modifier){
     val userData = googleAuthClient.getSignedInUser();
+    val coroutineScope = rememberCoroutineScope();
+    val navController = LocalNavController.current;
+    Log.d("User", userData.toString());
 
-    Log.d(TAG, "User data ::: $userData");
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -63,22 +69,13 @@ public fun Topbar(googleAuthClient: FirebaseAuthClient, modifier: Modifier = Mod
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (userData != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(userData.profilePictureUrl),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape)
-                )
-            }else {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(55.dp)
-                        .clip(CircleShape)
-                )
+
+
+            ProfileDropdown(profilePictureUrl = userData?.profilePictureUrl){
+                coroutineScope.launch {
+                    googleAuthClient.signOut();
+                    navController.navigate(BabyBuyScreen.Login.name)
+                }
             }
             
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -89,7 +86,7 @@ public fun Topbar(googleAuthClient: FirebaseAuthClient, modifier: Modifier = Mod
                 )
 
                 Text(
-                    text = userData?.username ?: "",
+                    text = if(userData?.username != null && userData.username != "") userData.username else "User 1",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Normal,
                 )
